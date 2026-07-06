@@ -1,0 +1,30 @@
+{
+  "name": "datacty",
+  "version": "1.0.0",
+  "description": "This is a web application for Data Portal.",
+  "main": "index.js",
+  "scripts": {
+    "dev:css": "tailwindcss -i ./src/css/app.css -o ./public/css/style.css --watch",
+    "dev:js": "node build.js --watch",
+    "dev": "npm-run-all --parallel dev:css dev:js",
+    "build:css": "tailwindcss -i ./src/css/app.css -o ./public/css/app.css --minify",
+    "build:js": "node build.js --minify",
+    "build": "npm-run-all build:css build:js",
+    "obfuscate": "node obfuscate.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gutlibe/datacty.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "autoprefixer": "^10.4.16",
+    "esbuild": "^0.19.5",
+    "javascript-obfuscator": "^4.1.1",
+    "npm-run-all": "^4.1.5",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5"
+  }
+}

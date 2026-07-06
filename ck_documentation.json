@@ -1,0 +1,412 @@
+{
+  "title": "CK-Godsway API Documentation",
+  "version": "2.0.0",
+  "description": "Comprehensive API for purchasing data packages and managing digital services in Ghana",
+  "baseUrl": "https://console.ckgodsway.com/api",
+  "authentication": {
+    "type": "API Key",
+    "header": "X-API-Key",
+    "description": "Include your API key in the X-API-Key header for all requests",
+    "note": "Contact support@ckgodsway.com to obtain an API key"
+  },
+  "endpoints": {
+    "/external/request-api-key": {
+      "method": "POST",
+      "description": "Request an API key for your integration",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "string (required) - Project/Company name",
+        "description": "string (optional) - Project description",
+        "website": "string (required) - Your website URL",
+        "contactEmail": "string (required) - Contact email",
+        "contactPhone": "string (optional) - Contact phone number",
+        "requestReason": "string (optional) - Why you need API access",
+        "businessType": "string (optional) - Type of business/organization"
+      },
+      "responses": {
+        "201": {
+          "description": "Request submitted successfully",
+          "example": {
+            "success": true,
+            "message": "API key request submitted successfully",
+            "data": {
+              "requestId": "req_123456",
+              "keyId": "ak_abcdef123456",
+              "status": "pending_approval",
+              "submittedAt": "2024-01-15T10:30:00Z",
+              "note": "Your request has been submitted and is pending admin approval. You will be contacted via email once your request is reviewed."
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "example": {
+            "success": false,
+            "error": "Name, contact email, and website are required"
+          }
+        },
+        "409": {
+          "description": "Duplicate request",
+          "example": {
+            "success": false,
+            "error": "An active API key already exists for this email address"
+          }
+        }
+      }
+    },
+    "/data-purchase": {
+      "method": "POST",
+      "description": "Purchase internet data package - automatically debits user balance and creates transaction",
+      "headers": {
+        "Content-Type": "application/json",
+        "X-API-Key": "your-api-key-here"
+      },
+      "body": {
+        "networkKey": "string (required) - Network identifier: 'YELLO', 'AT_PREMIUM', 'TELECEL', 'AT_BIGTIME'",
+        "recipient": "string (required) - Phone number to receive data (10 digits starting with 0)",
+        "capacity": "string (required) - Data amount in GB (e.g., '1', '2', '5')"
+      },
+      "responses": {
+        "200": {
+          "description": "Data package purchased successfully",
+          "example": {
+            "success": true,
+            "message": "Order placed successfully",
+            "data": {
+              "network": "MTN",
+              "capacity": "1GB",
+              "price": 7,
+              "recipient": "0201234567",
+              "reference": "ORDER_123456_1635123456789",
+              "status": "PROCESSING",
+              "orderDate": "2024-01-15T10:30:00Z"
+            },
+            "balance": {
+              "previous": 100,
+              "current": 93,
+              "deducted": 7
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "examples": {
+            "Missing networkKey": {
+              "success": false,
+              "error": "networkKey is required (YELLO, MTN_PRO, AT_PREMIUM, TELECEL, AT_BIGTIME)"
+            },
+            "Invalid networkKey": {
+              "success": false,
+              "error": "Invalid networkKey. Must be one of: YELLO, MTN_PRO, AT_PREMIUM, TELECEL, AT_BIGTIME"
+            },
+            "Missing recipient": {
+              "success": false,
+              "error": "recipient phone number is required"
+            },
+            "Invalid recipient": {
+              "success": false,
+              "error": "Recipient must be a valid 10-digit phone number starting with 0"
+            },
+            "Missing capacity": {
+              "success": false,
+              "error": "capacity (data amount) is required"
+            },
+            "Invalid capacity": {
+              "success": false,
+              "error": "Capacity must be a positive number"
+            },
+            "Insufficient balance": {
+              "success": false,
+              "error": "Insufficient balance. Required: ₵7.00, Available: ₵5.00"
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication error",
+          "example": {
+            "success": false,
+            "error": "Invalid or inactive API key"
+          }
+        },
+        "403": {
+          "description": "API key not linked to user account",
+          "example": {
+            "success": false,
+            "error": "API key is not linked to a user account. Please contact support."
+          }
+        },
+        "404": {
+          "description": "Network or bundle not found",
+          "examples": {
+            "Network not found": {
+              "success": false,
+              "error": "Network YELLO not found or not active"
+            },
+            "Bundle not found": {
+              "success": false,
+              "error": "No bundle found for 10GB on MTN. Available sizes: 1GB, 2GB, 5GB"
+            }
+          }
+        },
+        "500": {
+          "description": "Internal server error",
+          "example": {
+            "success": false,
+            "error": "Internal server error"
+          }
+        }
+      }
+    },
+    "/external/order-status": {
+      "methods": [
+        "GET"
+      ],
+      "description": "Check order status by reference or order number",
+      "note": "Requires valid API key authentication. Returns detailed order information including status, network, phone number, and transaction details. Only GET method is supported.",
+      "get": {
+        "description": "Get order status using query parameters",
+        "parameters": {
+          "reference": {
+            "type": "string",
+            "description": "Order reference number",
+            "required": false
+          },
+          "orderNumber": {
+            "type": "number",
+            "description": "Order number",
+            "required": false
+          }
+        },
+        "note": "Either 'reference' or 'orderNumber' is required"
+      },
+      "responses": {
+        "200": {
+          "description": "Order status retrieved successfully",
+          "example": {
+            "success": true,
+            "data": {
+              "orderNumber": 12345,
+              "reference": "ORDER_abc123",
+              "status": "SUCCESSFUL",
+              "statusDescription": "Order completed successfully - data bundle delivered",
+              "network": "MTN",
+              "phoneNumber": "0241234567",
+              "dataAmount": 1024,
+              "amountPaid": 5,
+              "createdAt": "2024-01-01T10:00:00Z",
+              "updatedAt": "2024-01-01T10:05:00Z",
+              "user": {
+                "name": "John Doe",
+                "email": "john@example.com"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Missing required parameters",
+          "example": {
+            "success": false,
+            "error": "Missing parameters",
+            "message": "Either 'reference' or 'orderNumber' query parameter is required"
+          }
+        },
+        "401": {
+          "description": "Invalid or missing API key",
+          "example": {
+            "success": false,
+            "error": "API key required",
+            "message": "Please provide your API key in the X-API-Key header or Authorization header"
+          }
+        },
+        "404": {
+          "description": "Order not found",
+          "example": {
+            "success": false,
+            "error": "Order not found with reference: ORDER_abc123"
+          }
+        }
+      }
+    }
+  },
+  "networks": {
+    "YELLO": {
+      "name": "MTN",
+      "displayName": "MTN",
+      "networkKey": "YELLO",
+      "description": "MTN Ghana data packages"
+    },
+    "AT_PREMIUM": {
+      "name": "AT Data (Instant)",
+      "displayName": "AT Data (Instant)",
+      "networkKey": "AT_PREMIUM",
+      "description": "AT instant data delivery"
+    },
+    "TELECEL": {
+      "name": "TELECEL",
+      "displayName": "TELECEL",
+      "networkKey": "TELECEL",
+      "description": "Telecel Ghana data packages"
+    },
+    "AT_BIGTIME": {
+      "name": "AT - Big Time",
+      "displayName": "AT - Big Time",
+      "networkKey": "AT_BIGTIME",
+      "description": "AT bulk data packages"
+    }
+  },
+  "orderStatuses": {
+    "INITIATED": {
+      "description": "Order has been initiated",
+      "details": "Order has been created and is in the initial stage of processing"
+    },
+    "PENDING": {
+      "description": "Order is being processed",
+      "details": "Order has been created and is awaiting processing"
+    },
+    "PROCESSING": {
+      "description": "Order sent to network provider, awaiting completion",
+      "details": "Order has been sent to the network provider and is being processed"
+    },
+    "SUCCESSFUL": {
+      "description": "Order completed successfully - data bundle delivered",
+      "details": "Data bundle has been successfully delivered to the recipient"
+    },
+    "FAILED": {
+      "description": "Order failed - please contact support or try again",
+      "details": "Order processing failed, may require manual intervention"
+    },
+    "CANCELLED": {
+      "description": "Order was cancelled",
+      "details": "Order was cancelled by user or admin"
+    }
+  },
+  "processingModes": {
+    "automatic": {
+      "description": "Automatic processing via network API",
+      "referenceFormat": "ORDER_*",
+      "details": "Orders are processed automatically through the network provider's API"
+    },
+    "manual": {
+      "description": "Manual processing by admin",
+      "referenceFormat": "manual*, m_*, manual_*",
+      "details": "Orders that failed automatic processing are handled manually by administrators"
+    },
+    "failed": {
+      "description": "Failed orders",
+      "referenceFormat": "failed_*",
+      "details": "Orders that encountered errors during processing"
+    }
+  },
+  "rateLimiting": {
+    "description": "API requests are rate limited to prevent abuse",
+    "limits": {
+      "perMinute": 60,
+      "perHour": 1000,
+      "perDay": 10000
+    },
+    "note": "Higher limits available for premium API plans"
+  },
+  "errorCodes": {
+    "400": "Bad Request - Invalid request format or missing required fields",
+    "401": "Unauthorized - Invalid or missing API key",
+    "403": "Forbidden - API key not linked to user account",
+    "404": "Not Found - Resource not found",
+    "429": "Too Many Requests - Rate limit exceeded",
+    "500": "Internal Server Error - Server error occurred"
+  },
+  "examples": {
+    "javascript": {
+      "description": "JavaScript/Node.js examples",
+      "code": "\n// Purchase data package\nconst purchaseData = async (networkKey, recipient, capacity, apiKey) => {\n  try {\n    const response = await fetch('/api/data-purchase', {\n      method: 'POST',\n      headers: {\n        'Content-Type': 'application/json',\n        'X-API-Key': apiKey\n      },\n      body: JSON.stringify({\n        networkKey,\n        recipient,\n        capacity\n      })\n    });\n    \n    const result = await response.json();\n    if (result.success) {\n      console.log('Data package purchased successfully!');\n      console.log('Reference:', result.data.reference);\n      console.log('Status:', result.data.status);\n      return result.data;\n    } else {\n      console.log('Purchase failed:', result.error);\n      return null;\n    }\n  } catch (error) {\n    console.error('API request failed:', error);\n    return null;\n  }\n};\n\n// Check order status using GET (recommended)\nconst checkOrderStatus = async (reference, apiKey) => {\n  try {\n    const response = await fetch(`/api/external/order-status?reference=${reference}`, {\n      method: 'GET',\n      headers: {\n        'X-API-Key': apiKey\n      }\n    });\n    \n    const result = await response.json();\n    if (result.success) {\n      console.log('Order status:', result.data.status);\n      return result.data;\n    } else {\n      console.log('Status check failed:', result.error);\n      return null;\n    }\n  } catch (error) {\n    console.error('API request failed:', error);\n    return null;\n  }\n};\n\n// Usage examples\nconst dataOrder = await purchaseData('YELLO', '0201234567', '1', 'your-api-key');\nif (dataOrder) {\n  const orderStatus = await checkOrderStatus(dataOrder.reference, 'your-api-key');\n}\n        "
+    },
+    "php": {
+      "description": "PHP examples",
+      "code": "\n<?php\n// Purchase data package\nfunction purchaseData($networkKey, $recipient, $capacity, $apiKey) {\n    $data = json_encode([
+        'networkKey' => $networkKey,
+        'recipient' => $recipient,
+        'capacity' => $capacity
+    ]);
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => [
+                'Content-Type: application/json',
+                'X-API-Key: ' . $apiKey
+            ],
+            'content' => $data
+        ]
+    ]);
+
+    $response = file_get_contents('/api/data-purchase', false, $context);
+    $result = json_decode($response, true);
+
+    if ($result['success']) {
+        echo "Data package purchased successfully!\n";
+        echo "Reference: " . $result['data']['reference'] . "\n";
+        echo "Status: " . $result['data']['status'] . "\n";
+        return $result['data'];
+    } else {
+        echo "Purchase failed: " . $result['error'] . "\n";
+        return null;
+    }
+}
+
+// Check order status - DEPRECATED (endpoint deactivated)\nfunction checkOrderStatus($reference, $apiKey) {
+    // This endpoint has been deactivated
+    // Please use the admin dashboard or contact support for order status inquiries
+    echo "External order status API has been deactivated\n";
+    return null;
+}
+
+// Usage examples\n$dataOrder = purchaseData('YELLO', '0201234567', '1', 'your-api-key');
+if ($dataOrder) {
+    $orderStatus = checkOrderStatus($dataOrder['reference'], 'your-api-key');
+}
+?>\n        "
+    },
+    "python": {
+      "description": "Python examples",
+      "code": "\nimport requests\nimport json\n
+def purchase_data(network_key, recipient, capacity, api_key):\n    url = '/api/data-purchase'\n    headers = {\n        'Content-Type': 'application/json',\n        'X-API-Key': api_key\n    }\n    data = {\n        'networkKey': network_key,\n        'recipient': recipient,\n        'capacity': capacity\n    }\n    \n    response = requests.post(url, headers=headers, json=data)\n    result = response.json()\n    \n    if result.get('success'):\n        print(f"Data package purchased successfully!")\n        print(f"Reference: {result['data']['reference']}")\n        print(f"Status: {result['data']['status']}")\n        return result['data']\n    else:\n        print(f"Purchase failed: {result.get('error')}")\n        return None\n
+def check_order_status(reference, api_key):\n    # This endpoint has been deactivated\n    # Please use the admin dashboard or contact support for order status inquiries\n    print(\"External order status API has been deactivated\")\n    return None\n\n# Usage examples\ndata_order = purchase_data('YELLO', '0201234567', '1', 'your-api-key')\nif data_order:\n    order_status = check_order_status(data_order['reference'], 'your-api-key')\n        "
+    },
+    "curl": {
+      "description": "cURL examples",
+      "code": "\n# Purchase data package\ncurl -X POST \\
+  \"/api/data-purchase\" \
+  -H \"Content-Type: application/json\" \
+  -H \"X-API-Key: your-api-key-here\" \
+  -d '{\n    \"networkKey\": \"YELLO\",\n    \"recipient\": \"0201234567\",\n    \"capacity\": \"1\"\n  }'\n\n# External order status API - DEPRECATED (endpoint deactivated)\n# This endpoint has been deactivated\n# Please use the admin dashboard or contact support for order status inquiries\n\n# Example response (HTTP 410 Gone):\n# {\n#   \"success\": false,\n#   \"error\": \"External order status API has been deactivated\",\n#   \"message\": \"This endpoint is no longer available. Please use the admin dashboard or contact support for order status inquiries.\"\n# }\n        "
+    }
+  },
+  "bestPractices": {
+    "authentication": [
+      "Always include your API key in the X-API-Key header",
+      "Keep your API key secure and never expose it in client-side code",
+      "Rotate your API key periodically for security"
+    ],
+    "requests": [
+      "Use GET requests for order status checks (better performance and caching)",
+      "Implement proper error handling for all API responses",
+      "Use appropriate HTTP status codes for error handling"
+    ],
+    "rateLimiting": [
+      "Implement reasonable polling intervals (30-60 seconds for order status)",
+      "Don't overwhelm the API with rapid requests",
+      "Consider implementing exponential backoff for failed requests"
+    ],
+    "security": [
+      "Use HTTPS for all API calls",
+      "Validate all input data before sending to the API",
+      "Implement proper logging for debugging and monitoring"
+    ]
+  },
+  "support": {
+    "email": "api-support@ckgodsway.com",
+    "documentation": "https://console.ckgodsway.com/api/external/docs",
+    "status": "https://console.ckgodsway.com/api/external/status"
+  }
+}

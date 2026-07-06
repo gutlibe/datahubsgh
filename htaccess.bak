@@ -1,0 +1,6 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # If the request URI does not start with 'public/' or 'api/',
+    # then rewrite the request to be inside the 'public' directory.
+    RewriteRule ^(?!public/|api/)(.*)$ public/$1 [L]
+</IfModule>

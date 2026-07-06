@@ -1,0 +1,156 @@
+name: Zero Downtime Deployment
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, mysql, pdo_mysql
+
+    - name: Install Composer Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-progress --prefer-dist
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install NPM Dependencies
+      run: npm ci
+
+    - name: Build Assets
+      run: npm run build
+
+    - name: Prepare Artifact
+      run: |
+        # Remove development files to keep artifact small
+        rm -rf node_modules
+        rm -rf .git
+        rm -rf .github
+
+        # Remove the repo-root .htaccess: it's a leftover redirect-into-/public
+        # rule from an older deployment layout. Both nginx and Apache point
+        # straight at the public/ folder here, so it's dead weight - and since
+        # public_html symlinks to the whole release (not just release/public),
+        # Apache treats the release root as an ancestor directory that isn't
+        # whitelisted for AllowOverride, so this file causes a 500.
+        rm -f .htaccess
+
+        # Create deployment package
+        tar -czf /tmp/release.tar.gz .
+        mv /tmp/release.tar.gz .
+
+    - name: Ensure Directories Exist
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          mkdir -p /home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/private/deployments/artifacts
+          mkdir -p /home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/private/deployments/releases
+          mkdir -p /home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/private/deployments/shared
+
+    - name: Copy to Server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        source: "release.tar.gz"
+        target: "/home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/private/deployments/artifacts"
+
+    - name: Deploy on Server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          # Define Variables
+          DEPLOY_ROOT="/home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/private/deployments"
+          RELEASES_DIR="$DEPLOY_ROOT/releases"
+          SHARED_DIR="$DEPLOY_ROOT/shared"
+          ARTIFACT_DIR="$DEPLOY_ROOT/artifacts"
+
+          # Create new release timestamp
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          NEW_RELEASE_DIR="$RELEASES_DIR/$TIMESTAMP"
+
+          # Create directories if they don't exist
+          mkdir -p $RELEASES_DIR
+          mkdir -p $SHARED_DIR
+          mkdir -p $ARTIFACT_DIR
+
+          # Extract Release
+          echo "Extracting release to $NEW_RELEASE_DIR..."
+          mkdir -p $NEW_RELEASE_DIR
+          tar -xzf $ARTIFACT_DIR/release.tar.gz -C $NEW_RELEASE_DIR
+
+          # Link Shared Files (.env)
+          if [ -f "$SHARED_DIR/.env" ]; then
+            echo "Linking .env file..."
+            ln -sf $SHARED_DIR/.env $NEW_RELEASE_DIR/.env
+          else
+            echo "WARNING: .env file not found in $SHARED_DIR. Please create it."
+          fi
+
+          # Run Migrations
+          echo "Running database migrations..."
+          php $NEW_RELEASE_DIR/migrate.php
+
+          # Zero Downtime Symlink Switch
+          echo "Switching symlink..."
+
+          # NOTE: nginx's docroot for this project is public_html/public, so
+          # public_html itself must symlink to the WHOLE release (not release/public) -
+          # unlike the other projects where public_html points straight at release/public.
+          PUBLIC_HTML="/home/${{ secrets.SSH_USERNAME }}/web/datahubsgh.com/public_html"
+
+          # 1. Check if public_html is a real directory (not a symlink) - back it up once
+          if [ -d "$PUBLIC_HTML" ] && [ ! -L "$PUBLIC_HTML" ]; then
+             echo "Detected real directory at public_html. Moving it to backup..."
+             mv "$PUBLIC_HTML" "${PUBLIC_HTML}_backup_$TIMESTAMP"
+          fi
+
+          # 2. Create/Update the Symlinks
+          ln -sfn "$NEW_RELEASE_DIR" "$PUBLIC_HTML"
+
+          # Link the entire release root as 'current' for CLI/Cron stability
+          ln -sfn "$NEW_RELEASE_DIR" "$DEPLOY_ROOT/current"
+
+          # Verify
+          if [ -L "$PUBLIC_HTML" ] && [ -L "$DEPLOY_ROOT/current" ]; then
+              echo "SUCCESS: Symlinks updated."
+          else
+              echo "ERROR: Failed to switch symlinks."
+              exit 1
+          fi
+
+          # Cleanup Old Releases (Keep last 5)
+          echo "Cleaning up old releases..."
+          cd $RELEASES_DIR
+          ls -dt * | tail -n +6 | xargs -r rm -rf
+
+          # Cleanup Artifact
+          rm -f $ARTIFACT_DIR/release.tar.gz
+
+          # Reload PHP-FPM to clear OPcache
+          echo "Reloading PHP-FPM..."
+          sudo service php8.3-fpm reload
+
+          echo "Deployment Complete!"

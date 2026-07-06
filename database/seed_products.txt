@@ -1,0 +1,45 @@
+INSERT INTO products (network, name, volume, customer_price, agent_price, validity, is_available, created_at, updated_at)
+VALUES
+-- AirtelTigo Products
+('at', '1 GB', 1000, 4.80, 4.50, '60 Days', TRUE, NOW(), NOW()),
+('at', '2 GB', 2000, 9.60, 8.92, '60 Days', TRUE, NOW(), NOW()),
+('at', '3 GB', 3000, 14.40, 14.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '4 GB', 4000, 18.00, 17.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '5 GB', 5000, 21.00, 19.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '6 GB', 6000, 25.00, 23.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '7 GB', 7000, 29.00, 27.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '8 GB', 8000, 33.00, 29.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '9 GB', 9000, 37.00, 34.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '10 GB', 10000, 41.00, 39.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '12 GB', 12000, 49.00, 47.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '15 GB', 15000, 61.00, 58.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '20 GB', 20000, 80.50, 77.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '25 GB', 25000, 100.00, 97.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '30 GB', 30000, 119.50, 116.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '40 GB', 40000, 158.00, 154.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '50 GB', 50000, 196.00, 191.00, '60 Days', TRUE, NOW(), NOW()),
+('at', '100 GB', 100000, 385.00, 378.00, '60 Days', TRUE, NOW(), NOW()),
+
+-- MTN Products
+('mtn', '1 GB', 1000, 5.00, 4.90, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '2 GB', 2000, 10.00, 9.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '3 GB', 3000, 15.00, 14.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '4 GB', 4000, 20.00, 19.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '5 GB', 5000, 24.50, 23.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '6 GB', 6000, 29.00, 28.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '10 GB', 10000, 46.00, 45.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '8 GB', 8000, 38.00, 36.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '15 GB', 15000, 65.00, 63.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '20 GB', 20000, 85.00, 82.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '25 GB', 25000, 105.00, 102.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '30 GB', 30000, 127.00, 125.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '40 GB', 40000, 169.00, 165.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '50 GB', 50000, 208.00, 204.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('mtn', '100 GB', 100000, 410.00, 400.00, 'Non Expiry', TRUE, NOW(), NOW()),
+
+-- Telecel Products
+('telecel', '10 GB', 10000, 47.50, 44.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('telecel', '15 GB', 15000, 72.00, 67.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('telecel', '20 GB', 20000, 96.00, 90.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('telecel', '25 GB', 25000, 120.00, 114.00, 'Non Expiry', TRUE, NOW(), NOW()),
+('telecel', '5 GB', 5000, 25.00, 24.00, 'Non Expiry', TRUE, NOW(), NOW());
