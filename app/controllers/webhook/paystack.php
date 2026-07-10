@@ -4,6 +4,7 @@ use App\Classes\Database;
 use App\Classes\Setting;
 use App\Classes\ProcessingService;
 use App\Classes\Order;
+use App\Classes\ResultChecker;
 
 // Log the raw input to a file for debugging
 $raw_input = file_get_contents('php://input');
@@ -56,6 +57,22 @@ if ($event->event === 'charge.success') {
                     $processingService = new ProcessingService();
                     $processingService->handleOrderProcessing($order['id']);
                 }
+            } elseif ($transaction['source'] === 'result_checker') {
+                $rc = new ResultChecker();
+                $rcOrder = $rc->findOrderByReference($transaction['reference']);
+
+                if ($rcOrder && $rcOrder['status'] === 'pending') {
+                    $rc->updateStatus($rcOrder['id'], 'processing');
+                }
+
+                // Card is only issued now that payment is confirmed. Call CK
+                // outside this DB transaction, which is about to commit.
+                $pdo->commit();
+                http_response_code(200);
+                if ($rcOrder) {
+                    $rc->processPurchase($rcOrder['id']);
+                }
+                exit;
             } else {
                 // Handle user deposit
                 $stmt = $pdo->prepare('UPDATE users SET balance = balance + :amount WHERE id = :id');

@@ -8,6 +8,7 @@
         ['url' => 'admin/providers', 'icon' => 'fas fa-network-wired', 'label' => 'Gateways'],
         ['url' => 'admin/settings', 'icon' => 'fas fa-sliders-h', 'label' => 'General'],
         ['url' => 'admin/configurations', 'icon' => 'fas fa-cog', 'label' => 'System Config'],
+        ['url' => 'admin/result-checker', 'icon' => 'fas fa-file-invoice', 'label' => 'Result Checker'],
         ['url' => 'admin/service-status', 'icon' => 'fas fa-signal', 'label' => 'Uptime'],
     ];
 

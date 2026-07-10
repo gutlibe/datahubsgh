@@ -140,6 +140,75 @@ class CKGodswayService
         }
     }
 
+    /**
+     * Purchases one or more result checker cards (WASSCE/BECE) via CKGodsway.
+     * Normalizes both the single-card ('checker') and bulk ('checkers')
+     * response shapes into one cards[] format.
+     */
+    public function sendResultChecker($checkerType, $msisdn, $quantity, $reference)
+    {
+        if (empty($this->apiKey)) {
+            return ['success' => false, 'message' => 'CKGodsway API key is not configured.'];
+        }
+
+        $payload = [
+            'checkerType' => $checkerType,
+            'recipient' => $msisdn,
+            'quantity' => $quantity,
+            'reference' => $reference
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->baseUrl . '/result-checker-purchase');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-API-Key: ' . $this->apiKey
+        ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+
+        $responseBody = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return ['success' => false, 'message' => 'Connection failed: ' . $error];
+        }
+
+        $response = json_decode($responseBody, true);
+
+        if ($httpCode !== 200 || empty($response['success'])) {
+            $errorMessage = $response['error'] ?? ($response['message'] ?? 'Unknown error');
+            return ['success' => false, 'message' => "CKGodsway Failed: {$errorMessage}"];
+        }
+
+        $cards = [];
+        if (isset($response['checker'])) {
+            $cards[] = [
+                'serial' => $response['checker']['serial'] ?? null,
+                'pin' => $response['checker']['pin'] ?? null,
+                'code' => $response['checker']['code'] ?? null
+            ];
+        } elseif (isset($response['checkers']) && is_array($response['checkers'])) {
+            foreach ($response['checkers'] as $card) {
+                $cards[] = [
+                    'serial' => $card['serial'] ?? null,
+                    'pin' => $card['pin'] ?? null,
+                    'code' => $card['code'] ?? null
+                ];
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => $response['message'] ?? 'Result checker purchased successfully',
+            'cards' => $cards
+        ];
+    }
+
     private function getNetworkKey($dbNetwork)
     {
         switch (strtolower($dbNetwork)) {

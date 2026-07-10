@@ -41,7 +41,11 @@ $routes = [
     'admin/service-status' => 'admin/service-status.php',
     'admin/providers' => 'admin/providers.php',
     'sudo/migrate' => 'admin/migrate.php',
-    'direct-purchase-success' => 'public/direct-purchase-success.php'
+    'direct-purchase-success' => 'public/direct-purchase-success.php',
+    'result-checker' => 'public/result-checker.php',
+    'result-checker-success' => 'public/result-checker-success.php',
+    'admin/result-checker' => 'admin/result-checker.php',
+    'admin/result-checker/orders' => 'admin/result-checker-orders.php'
 ];
 
 $controllerFile = __DIR__ . '/../app/controllers/';

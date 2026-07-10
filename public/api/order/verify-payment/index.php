@@ -7,6 +7,7 @@ use App\Classes\Order;
 use App\Classes\Transaction;
 use App\Classes\Setting;
 use App\Classes\ProcessingService;
+use App\Classes\ResultChecker;
 
 // Security check: Only allow in local environment or if explicitly enabled
 $env = $_ENV['APP_ENV'] ?? 'production';
@@ -73,13 +74,31 @@ if ($result && $result['status'] && $result['data']['status'] === 'success') {
         $stmt = $db->prepare('UPDATE transactions SET status = "success", is_credited_at = NOW() WHERE id = ?');
         $stmt->execute([$transaction['id']]);
 
+        if ($transaction['source'] === 'result_checker') {
+            $rc = new ResultChecker();
+            $rcOrder = $rc->findOrderByReference($reference);
+
+            if ($rcOrder && $rcOrder['status'] === 'pending') {
+                $rc->updateStatus($rcOrder['id'], 'processing');
+            }
+
+            $db->commit();
+
+            if ($rcOrder) {
+                $rc->processPurchase($rcOrder['id']);
+            }
+
+            echo json_encode(['success' => true, 'message' => 'Payment verified successfully', 'status' => 'success']);
+            exit;
+        }
+
         // Update Order and Process
         $orderClass = new Order();
         $order = $orderClass->findOrderByReference($reference);
-        
+
         if ($order) {
             $orderClass->updateStatus($order['id'], 'accepted', 'Payment verified manually (Local Dev).');
-            
+
             // Trigger processing
             $processingService = new ProcessingService();
             $processingService->handleOrderProcessing($order['id']);

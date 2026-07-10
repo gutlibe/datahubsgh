@@ -79,9 +79,28 @@ if (!empty($waValue)) {
         </div>
         <?php endif; ?>
 
+        <?php if (($configs['enable_result_checker'] ?? '0') === '1'): ?>
+        <div class="mb-10">
+            <a href="<?php echo rtrim(APP_URL, '/'); ?>/result-checker" class="group relative flex items-center justify-between bg-[#0f172a] rounded-[40px] border border-white/5 overflow-hidden transition-all duration-500 hover:border-emerald-500/30 hover:shadow-2xl hover:shadow-emerald-500/10 p-10">
+                <div class="flex items-center gap-6">
+                    <div class="w-20 h-20 rounded-3xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform duration-500 text-emerald-400">
+                        <i class="fas fa-file-invoice text-3xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-black text-white italic mb-1">Result Checker</h3>
+                        <p class="text-slate-500 text-sm font-medium">WASSCE & BECE checker cards, delivered instantly.</p>
+                    </div>
+                </div>
+                <div class="w-14 h-14 flex items-center justify-center rounded-2xl bg-emerald-500 text-white group-hover:scale-110 transition-transform">
+                    <i class="fas fa-arrow-right"></i>
+                </div>
+            </a>
+        </div>
+        <?php endif; ?>
+
         <!-- Network Selection Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start mb-24">
-            
+
             <!-- MTN Card -->
             <div class="group relative bg-[#0f172a] rounded-[40px] border border-white/5 overflow-hidden transition-all duration-500 hover:border-indigo-500/30 hover:shadow-2xl hover:shadow-indigo-500/10 <?php echo ($configs['enable_mtn_purchase'] ?? '1') === '0' ? 'opacity-50 grayscale' : ''; ?>">
                 <div class="absolute top-0 left-0 w-full h-1 bg-amber-400"></div>
