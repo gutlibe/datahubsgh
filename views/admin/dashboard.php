@@ -164,6 +164,7 @@
                             <?php 
                                 $statusStyle = match($order['status']) {
                                     'accepted' => 'bg-green-500/10 text-green-400 border-green-500/20',
+                                    'processing' => 'bg-blue-500/10 text-blue-400 border-blue-500/20',
                                     'pending' => 'bg-amber-500/10 text-amber-400 border-amber-500/20',
                                     'failed' => 'bg-red-500/10 text-red-400 border-red-500/20',
                                     default => 'bg-white/5 text-slate-400 border-white/5'

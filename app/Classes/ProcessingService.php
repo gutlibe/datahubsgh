@@ -86,7 +86,7 @@ class ProcessingService
             // 3. Handle Result
             if ($result['success']) {
                 // Use a generic message for the user/database, logging the specific provider details if needed internally
-                $this->order->updateStatus($orderId, 'accepted', 'Order sent for processing.');
+                $this->order->updateStatus($orderId, 'processing', 'Order sent for processing.');
                 $this->telegramNotifier->sendAcceptedNotification($notificationData);
             } else {
                 $this->order->updateOrder($orderId, [
